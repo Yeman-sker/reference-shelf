@@ -1,9 +1,9 @@
 {
   "id": "reference-shelf",
   "name": "Reference Shelf",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "minAppVersion": "1.13.0",
-  "description": "Keep a local image above your note while reading. Shared pins, independent tab layouts, no Markdown changes.",
+  "description": "Place multiple image references anywhere in your window. Crop non-destructively, keep references across notes, and preserve your reading layout.",
   "author": "Reference Shelf contributors",
   "isDesktopOnly": true
 }

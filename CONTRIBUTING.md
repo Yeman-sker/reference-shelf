@@ -6,13 +6,16 @@ or screenshots containing private content.
 
 ## Product constraints
 
-- Keep pins in memory, keyed by note path. Keep display state per leaf.
+- Keep multiple pins in memory, associated with their source note. Keep ordinary placement per leaf and cross-note placement per window.
 - Reconcile membership using **all** Markdown leaves, including deferred leaves.
 - Never use an active-tab event as proof that a note was closed.
 - Never modify note contents or frontmatter for a Shelf action.
 - No network requests, analytics, remote image loading or hidden persistence.
 - Put rendering integrations behind `ReferenceAdapter`.
-- Keep layout integration in `src/shelf.ts`; do not reparent the editor.
+- Keep window integration in `src/reference-canvas.ts`; do not resize, reparent or restyle the editor.
+- Blank canvas must pass input through. Do not restrict placement to a leaf, page margin or centered layout.
+- Crop stores normalized view coordinates only. Never export new files or modify original images.
+- Test readable source regions beside full-height explanations, not just whether Pin/Resize controls work.
 - Test changes in a disposable, isolated Obsidian profile, not a personal vault.
 
 ## Verification
