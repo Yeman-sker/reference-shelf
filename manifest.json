@@ -1,0 +1,9 @@
+{
+  "id": "reference-shelf",
+  "name": "Reference Shelf",
+  "version": "0.1.0",
+  "minAppVersion": "1.13.0",
+  "description": "Keep a local image above your note while reading. Shared pins, independent tab layouts, no Markdown changes.",
+  "author": "Reference Shelf contributors",
+  "isDesktopOnly": true
+}
