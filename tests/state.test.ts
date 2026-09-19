@@ -79,7 +79,7 @@ describe('crop and window geometry', () => {
   });
   it('collapsed height does not destroy stored width', () => {
     const pin = new ShelfStore().add('A.md', image);
-    expect(placementHeight({ ...layout, collapsed: true }, pin)).toBe(28); expect(layout.width).toBe(300);
+    expect(placementHeight({ ...layout, collapsed: true }, pin)).toBe(44); expect(layout.width).toBe(300);
   });
 });
 describe('safe local image sources', () => {

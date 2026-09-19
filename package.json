@@ -1,6 +1,6 @@
 {
   "name": "reference-shelf",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "private": true,
   "description": "A local-first, full-window reference canvas with multiple non-destructive image crops for Obsidian Desktop.",
   "scripts": {
@@ -8,6 +8,7 @@
     "dev": "node esbuild.config.mjs --watch",
     "test": "vitest run",
     "test:live": "npm run build && node scripts/live-test.mjs",
+    "test:perf": "npm run build && DIAG_VARIANTS=baseline,baseline,baseline DIAG_NAME=performance-results DIAG_ASSERT=1 node scripts/diagnose-interaction.mjs",
     "check": "npm test && npm run build",
     "package": "npm run check && node scripts/package.mjs"
   },

@@ -4,8 +4,10 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { setup } from './live-setup.mjs';
 import { launch } from './live-launch.mjs';
+import { motionChecks } from './live-motion.mjs';
 
 const fixture = await setup();
+const { version } = JSON.parse(await readFile('manifest.json', 'utf8'));
 console.log('Isolated vault:', fixture.vault);
 const app = await launch(fixture.profile), page = app.page;
 const checks = [], errors = []; let hostArchive = '';
@@ -37,8 +39,8 @@ async function cropRegion(x, y, w, h) {
   await dialog.getByRole('button', { name: 'Use selection', exact: true }).click(); await expect(dialog).toHaveCount(0);
 }
 async function movePin(id, x, y) {
-  const handle = card(id).getByRole('button', { name: 'Move reference', exact: true }), b = await handle.boundingBox();
-  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await page.mouse.down();
+  const b = await card(id).boundingBox();
+  await page.mouse.move(b.x + 24, b.y + 80); await page.mouse.down();
   await page.mouse.move(x, y, { steps: 12 }); await page.mouse.up();
 }
 async function resizePin(id, dx) {
@@ -56,6 +58,8 @@ try {
   await page.evaluate(() => app.setting.close()); await page.bringToFront();
   await page.waitForFunction(() => activeWindow.document === document);
   await page.setViewportSize({ width: 1500, height: 950 });
+  // Functional regression is deterministic; separate motion checks use real animation.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.evaluate(() => { app.workspace.leftSplit.collapse(); app.workspace.rightSplit.collapse(); document.body.style.setProperty('--file-line-width', '660px'); });
   await open('A.md');
   hostArchive = app.logs().match(/Loading updated app package ([^\n]+)/)?.[1] ?? '';
@@ -106,16 +110,17 @@ try {
     await page.mouse.move(visibleParagraph.x + 5, visibleParagraph.y + 10); await page.mouse.down(); await page.mouse.move(visibleParagraph.x + 200, visibleParagraph.y + 10, { steps: 8 }); await page.mouse.up();
     expect(await page.evaluate(() => window.getSelection()?.toString().length)).toBeGreaterThan(5);
   });
+  await motionChecks({ page, check, card, a, b, movePin });
   await check('Move across text and sidebar regions, overlap, front ordering, keyboard and collapse', async () => {
     const unchangedB = await card(b).boundingBox(); await movePin(a, 690, 220);
     expect((await card(a).boundingBox()).x).toBeGreaterThan(600); expect(await card(b).boundingBox()).toEqual(unchangedB);
     await resizePin(a, 160); expect((await card(a).boundingBox()).width).toBeGreaterThan(450);
-    await card(a).getByRole('button', { name: 'Move reference', exact: true }).focus(); const old = await card(a).boundingBox(); await page.keyboard.press('ArrowLeft'); expect((await card(a).boundingBox()).x).toBe(old.x - 10);
-    await card(a).getByRole('button', { name: 'Collapse reference', exact: true }).click(); expect((await card(a).boundingBox()).height).toBe(28);
+    await card(a).focus(); const old = await card(a).boundingBox(); await page.keyboard.press('ArrowLeft'); expect((await card(a).boundingBox()).x).toBe(old.x - 10);
+    await card(a).getByRole('button', { name: 'Collapse reference', exact: true }).click(); expect((await card(a).boundingBox()).height).toBe(44);
     await card(a).getByRole('button', { name: 'Expand reference', exact: true }).click(); expect((await card(a).boundingBox()).height).toBe(old.height);
     await page.evaluate(() => app.workspace.leftSplit.expand()); await movePin(a, 100, 190);
     expect((await card(a).boundingBox()).x).toBeLessThan(200); await page.evaluate(() => app.workspace.leftSplit.collapse());
-    await movePin(a, 1180, 250); await card(b).getByRole('button', { name: 'Move reference', exact: true }).click();
+    await movePin(a, 1180, 250); await card(b).click({ position: { x: 100, y: 20 } });
     expect(await card(b).evaluate(el => Number(el.style.zIndex))).toBeGreaterThan(await card(a).evaluate(el => Number(el.style.zIndex)));
     await movePin(a, 70, 160);
   });
@@ -142,8 +147,8 @@ try {
     await scroller().evaluate(el => { el.scrollTop = 0; });
     await menuImage('composite.svg', 'Pin image on canvas'); await page.keyboard.press('Escape');
     await expect(page.locator('.rs-placement-preview')).toHaveCount(0); await expect(cards).toHaveCount(2);
-    const old = await card(a).boundingBox(), handle = await card(a).getByRole('button', { name: 'Move reference', exact: true }).boundingBox();
-    await page.mouse.move(handle.x + 10, handle.y + 10); await page.mouse.down(); await page.mouse.move(handle.x + 80, handle.y + 80, { steps: 5 });
+    const old = await card(a).boundingBox();
+    await page.mouse.move(old.x + 30, old.y + 80); await page.mouse.down(); await page.mouse.move(old.x + 110, old.y + 160, { steps: 5 });
     await page.keyboard.press('Escape'); await page.mouse.up(); expect(await card(a).boundingBox()).toEqual(old);
   });
   await check('Same-note tabs share pins and crop but keep independent geometry', async () => {
@@ -222,7 +227,7 @@ try {
     await popup.screenshot({ path: 'test-results/popout-actions.png' });
     await popup.getByText('Keep across notes', { exact: true }).click();
     await expect(card(id)).toBeVisible(); const primary = await card(id).boundingBox();
-    await popCard.getByRole('button', { name: 'Move reference', exact: true }).focus(); await popup.keyboard.press('ArrowRight');
+    await popCard.focus(); await popup.keyboard.press('ArrowRight');
     expect(await card(id).boundingBox()).toEqual(primary);
     const closed = popup.waitForEvent('close'); await popup.keyboard.press('Meta+w'); await closed;
     await page.bringToFront(); await expect(card(id)).toBeVisible();
@@ -270,7 +275,7 @@ try {
     expect(hash(await readFile(path.join(fixture.vault, 'composite.svg')))).toBe(originalImage);
   });
   expect(errors).toEqual([]);
-  await writeFile('test-results/live-results.json', JSON.stringify({ fixture: fixture.root, hostArchive: path.basename(hostArchive), platform: process.platform, version: '0.2.0', checks, errors, passed: true }, null, 2));
+  await writeFile('test-results/live-results.json', JSON.stringify({ fixture: fixture.root, hostArchive: path.basename(hostArchive), platform: process.platform, version, checks, errors, passed: true }, null, 2));
 } catch (error) {
   console.error('FAILURE', error);
   await mkdir('test-results', { recursive: true }); await page.screenshot({ path: 'test-results/failure.png' }).catch(() => {});

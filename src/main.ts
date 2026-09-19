@@ -152,6 +152,7 @@ export default class ReferenceShelfPlugin extends Plugin {
     const placement = context.canvas.position(pin, event.clientX, event.clientY);
     this.store.layout(pin, this.id(pending.leaf), context.canvas.id, placement);
     this.cancelPlacement(); this.sync();
+    context.canvas.cards.get(pin.id)?.land();
   }
   private cancelPlacement(): void {
     if (this.pending) this.windows.get(this.pending.doc)?.canvas.stopPreview();
@@ -193,6 +194,8 @@ export default class ReferenceShelfPlugin extends Plugin {
     listeners.registerDomEvent(doc, 'dragstart', event => {
       const source = this.context(event.target); if (!source?.view.file) return;
       const image = this.adapter.resolveElement(source.image, source.view.file.path); if (!image) return;
+      const dragImage = doc.createElement('canvas'); dragImage.width = dragImage.height = 1;
+      event.dataTransfer?.setDragImage(dragImage, 0, 0);
       this.begin(source.leaf, image, source.image.naturalWidth, source.image.naturalHeight, FULL_CROP, true, event.clientX, event.clientY);
     }, true);
     listeners.registerDomEvent(doc, 'dragover', event => {

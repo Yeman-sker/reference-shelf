@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-v0.2.0 本地构建。已在隔离的 **macOS / Obsidian 1.13.7** 中验证真实鼠标、键盘、拖放和弹出窗口；不是浏览器仿制界面。尚未发布此版本的 GitHub Release 或上架社区插件市场。
+v0.3.1 本地构建。已在隔离的 **macOS / Obsidian 1.13.7** 中验证真实鼠标、键盘、拖放、弹出窗口与收放动画；不是浏览器仿制界面。尚未发布此版本的 GitHub Release 或上架社区插件市场。
 
 最低声明版本为 Obsidian Desktop 1.13.0，实际验证版本为 1.13.7。Windows、Linux、第三方主题和更旧版本尚未验收。
 
@@ -21,13 +21,15 @@ v0.2.0 本地构建。已在隔离的 **macOS / Obsidian 1.13.7** 中验证真�
 
 ### 操作参考图
 
-- 拖动标题栏左侧的小把手移动；拖四角等比例缩放。只有 Pin 自身接收鼠标事件，空白处照常滚动、选字、编辑。
-- 聚焦移动把手后，用方向键移动 10px；按住 Shift 微调 1px。角点也支持方向键缩放。
-- 点击置顶；允许重叠，不自动重新排列。靠近窗口边缘时轻微吸附。
-- 悬停或键盘聚焦后显示收起、菜单和关闭按钮。
+- **没有表头或专用拖动把手**：按住图片任意位置移动；拖四角等比例缩放。空白处照常滚动、选字、编辑，轻点不会误拖。
+- 用 Tab 聚焦图片后，方向键移动 10px，Shift 微调 1px，Enter 收放。角点也支持方向键缩放。
+- 点击置顶；允许重叠，不自动重新排列。拖动时背景轻微虚化，图片保持清晰；接近窗口边缘显示吸附预览。自由移动和缩放松手即停，只有吸附落点保留短促反馈。不会修改正文样式。
+- **悬停浮动操作组**：收起、菜单、关闭。偏左的图在左上角浮出，偏右的图在右上角浮出；拖动跨中线时不来回跳，落定后再判断。
+- **收缩为 44px 圆形图标**：向外侧上角收拢，带短促的弹性形变；不留下长条。点击图标恢复原尺寸与裁切，图标本身也可拖动。窗口不足以容纳时只做必要的边界约束。
+- 尊重系统“减少动态效果”：关闭弹性动画、过渡与背景模糊；快捷键和操作不变。动画可以中途反向，隐藏或取消拖动会清理反馈状态。
 - 菜单提供 **Adjust crop**、**Restore full image**、**View full image**、**Duplicate reference** 和 **Keep across notes**。双击图片也可临时查看完整原图。
 - **Cmd+Shift+Y**（Windows/Linux 为 Ctrl+Shift+Y）隐藏／恢复本窗口所有 Pin，位置不变。可在 Obsidian 快捷键设置中修改；左侧 ribbon 图标和命令面板也可切换。
-- `Esc` 取消尚未完成的放置或移动。窗口缩小时，越界的 Pin 回到可操作范围；极窄长图保留可操作的标题栏。
+- `Esc` 取消尚未完成的放置或移动。窗口缩小时，越界的 Pin 回到可操作范围；极窄长图保留可操作的卡片宽度，图片按比例居中。
 
 画布覆盖应用窗口内容区，包括侧栏和分栏之间的区域；保留顶部原生标题区域，不遮住系统窗口控制按钮。它不是无限画布，不移动或改造 Obsidian 的编辑器。
 
@@ -46,7 +48,7 @@ v0.2.0 本地构建。已在隔离的 **macOS / Obsidian 1.13.7** 中验证真�
 
 ## 安装或升级
 
-解压 `dist/reference-shelf-0.2.0.zip`，将 `reference-shelf/` 文件夹放入目标 Vault 的 `.obsidian/plugins/`，然后启用 **Reference Shelf**。
+解压 `dist/reference-shelf-0.3.1.zip`，将 `reference-shelf/` 文件夹放入目标 Vault 的 `.obsidian/plugins/`，然后启用 **Reference Shelf**。
 
 升级时先禁用旧版，替换 `main.js`、`manifest.json`、`styles.css`，再启用。安装包另含 LICENSE。无需迁移笔记或附件；v0.1 的旧 shelf-height 设置不再使用，已有 `data.json` 可以保留，插件不会覆盖或读取其中的旧布局。
 
@@ -59,6 +61,7 @@ npm ci
 npm run check       # 纯状态/解析单测 + strict TypeScript + esbuild
 npm run dev         # 监听构建
 npm run test:live   # 隔离的真实 Obsidian 宿主验收
+npm run test:perf   # 不录屏，双视口重复拖动/缩放性能与连续性检查（macOS harness）
 npm run package     # 构建、ZIP 解压逐字节核对、SHA256SUMS
 ```
 
@@ -73,8 +76,13 @@ npm run package     # 构建、ZIP 解压逐字节核对、SHA256SUMS
 - Reading View 与 Live Preview 的右键和原生拖放，不向编辑器插入多余图片链接。
 - 图片缺失、重新创建、重命名；PNG/JPG/JPEG/WEBP/SVG、4K 和极窄长图。
 - 明暗主题、窗口缩小、全宽非居中文本、禁用和 workspace reload。
+- 无表头、左右悬停控件、真实动画中间帧与角点锚定、圆形收缩及拖动、连续反向收放、吸附反馈、拖动中隐藏与减少动态效果。
 
 运行记录与截图写入忽略的 `test-results/`。功能验收与阅读体验验收分开：按钮能用不代表图文对照方便。性能帧率、第三方主题及 Windows/Linux 仍需独立测量，不将本机结果泛化为全平台兼容。
+
+需要录制实际交互时，安装 FFmpeg 后运行 `RS_RECORD_MOTION=1 npm run test:live`，生成 `test-results/reference-shelf-motion.mp4`。视频来自真实宿主的 compositor 帧，不是动画重建；录制为可选项，普通验收不依赖 FFmpeg。
+
+性能检查在 1500×950 和 3000×1900 视口各重复三轮拖动与缩放，记录 rAF 间隔、输入间隔、布局次数和边界读取次数。当前本地门槛：测量段内没有 ≥50ms 的 renderer 帧回调间隔、每次手势边界读取不超过 6 次、反向斜拖不发生尺寸突跳。数据和构建哈希写入 `test-results/performance-results.json`；这是本机回归门槛，不代表所有设备的实际显示帧率保证。
 
 ## 代码结构
 
@@ -82,6 +90,7 @@ npm run package     # 构建、ZIP 解压逐字节核对、SHA256SUMS
 - `src/image-adapter.ts`：本地资源解析；保留 `ReferenceAdapter` 扩展接口。
 - `src/reference-canvas.ts`：每个窗口一个透明参考层、落点预览和显示切换。
 - `src/pin-card.ts`：参考图渲染、移动缩放、工具栏和错误恢复。
+- `src/motion.ts`：边缘吸附、角点锚定形变与减少动态效果判断。
 - `src/crop-editor.ts`、`src/image-preview.ts`：非破坏性裁切与临时完整原图预览。
 - `src/main.ts`：Obsidian 生命周期、窗口、tab、右键和拖放协调。
 

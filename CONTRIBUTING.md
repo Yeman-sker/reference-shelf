@@ -17,6 +17,8 @@ or screenshots containing private content.
 - Crop stores normalized view coordinates only. Never export new files or modify original images.
 - Test readable source regions beside full-height explanations, not just whether Pin/Resize controls work.
 - Test changes in a disposable, isolated Obsidian profile, not a personal vault.
+- Keep references frameless. Controls float over the image and collapsed references are corner-anchored circles, not title bars.
+- Test normal motion separately from reduced-motion functional regression. Verify intermediate frames, quick reversal, keyboard focus and interruption cleanup, not only the final DOM.
 
 ## Verification
 
@@ -27,6 +29,9 @@ Obsidian profile. The default launch helper targets macOS; set `OBSIDIAN_EXECUTA
 and `OBSIDIAN_ASAR` for another installation. Cross-platform harness work needs separate
 validation. The helper copies an already installed app archive; it does not download
 or upgrade Obsidian. Test outputs go in ignored `test-results/`.
+
+For a real compositor-frame demo, install FFmpeg and run `RS_RECORD_MOTION=1 npm run test:live`.
+Recording is optional; the motion assertions always run, including when FFmpeg is absent.
 
 Before release, test your target Obsidian version, a third-party theme, different
 window sizes and OS-specific drag behavior. Do not equate unit tests with real-host
